@@ -1,43 +1,40 @@
+use poise::serenity_prelude as serenity;
 use std::env;
 
-use serenity::async_trait;
-use serenity::model::channel::Message;
-use serenity::model::gateway::Ready;
-use serenity::prelude::*;
+struct Data {}
+type Error = Box<dyn std::error::Error + Send + Sync>;
+type Context<'a> = poise::Context<'a, Data, Error>;
 
-struct Handler;
-
-#[async_trait]
-impl EventHandler for Handler {
-    // set handler for `message` event
-    // called whenever a new message is received
-
-    async fn message(&self, ctx: Context, msg: Message) {
-        if msg.content == "hello benbot" {
-            if let Err(why) = msg.channel_id.say(&ctx.http, "i am rusting").await {
-                println!("Error sending message: {why:?}");
-            }
-        }
-    }
-
-    async fn ready(&self, _: Context, ready: Ready) {
-        println!("{} is connected", ready.user.name);
-    }
+// says hello
+#[poise::command(slash_command, prefix_command)]
+async fn say_hello(
+	ctx: Context<'_>
+) -> Result<(), Error> {
+	ctx.say("i am poising").await?;
+	Ok(())
 }
 
 #[tokio::main]
 async fn main() {
-    let token = env::var("BENBOT_TOKEN").expect("Expected a token in the environment");
+	let token = env::var("BENBOT_TOKEN").expect("missing BENBOT_TOKEN from environment variables");
+	let intents = serenity::GatewayIntents::non_privileged();
 
-    // intents decide what events the bot will be notified about
-    let intents = GatewayIntents::GUILD_MESSAGES 
-        | GatewayIntents::DIRECT_MESSAGES
-        | GatewayIntents::MESSAGE_CONTENT;
-
-    let mut client = Client::builder(&token, intents).event_handler(Handler)
-        .await.expect("Error creating client");
-
-    if let Err(why) = client.start().await {
-        println!("Client error: {why:?}");
-    }
+	let framework = poise::Framework::builder()
+		.options(poise::FrameworkOptions {
+			commands: vec![say_hello()],
+			..Default::default()
+		})
+		.setup(|ctx, _ready, framework| {
+			Box::pin(async move {
+				poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+				Ok(Data {})
+			})
+		})
+		.build();
+	
+	let client = serenity::ClientBuilder::new(token, intents)
+		.framework(framework)
+		.await;
+	
+	client.unwrap().start().await.unwrap();
 }
