@@ -1,5 +1,6 @@
-include .env
+SHELL := /bin/bash
 
 bot: Cargo.toml Cargo.lock src/main.rs
 	cargo build
-	BENBOT_TOKEN=${BENBOT_TOKEN} cargo run
+	source .env
+	cargo run
