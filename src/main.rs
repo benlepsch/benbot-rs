@@ -21,11 +21,9 @@ async fn say_hello(
 async fn say(
 	ctx: Context<'_>,
 	#[description = "what to say"] text: String,
-	#[description = "who is saying"] user: Option<serenity::User>,
+	#[description = "who is saying"] user: serenity::User,
 ) -> Result<(), Error> {
-	let u = user.as_ref().unwrap_or_else(|| ctx.author());
-
-	let saying = format!("{} says: {}", u.name, text);
+	let saying = format!("{} says: {}", user.name, text);
 	
 	ctx.say(saying).await?;
 	Ok(())
