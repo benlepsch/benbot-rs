@@ -5,6 +5,9 @@ struct Data {}
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 
+
+/* Commands */
+
 // says hello
 #[poise::command(slash_command, prefix_command)]
 async fn say_hello(
@@ -14,16 +17,51 @@ async fn say_hello(
 	Ok(())
 }
 
+#[poise::command(slash_command, prefix_command)]
+async fn say(
+	ctx: Context<'_>,
+	#[description = "what to say"] text: String,
+	#[description = "who is saying"] user: Option<serenity::User>,
+) -> Result<(), Error> {
+	let u = user.as_ref().unwrap_or_else(|| ctx.author());
+
+	let saying = format!("{} says: {}", u.name, text);
+	
+	ctx.say(saying).await?;
+	Ok(())
+}
+
+
+/* Error handling */
+
+async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
+	match error {
+		poise::FrameworkError::Setup { error, .. } => panic!("Failed to start bot: {:?}", error),
+		poise::FrameworkError::Command {error, ctx, ..} => {
+			println!("Error in command `{}`: {:?}", ctx.command().name, error);
+		}
+
+		error => {
+			if let Err(e) = poise::builtins::on_error(error).await {
+				println!("Error while handling error: {}", e);
+			}
+		}
+	}
+}
+
 #[tokio::main]
 async fn main() {
 	let token = env::var("BENBOT_TOKEN").expect("missing BENBOT_TOKEN from environment variables");
 	let intents = serenity::GatewayIntents::non_privileged();
 
+	let options = poise::FrameworkOptions {
+		commands: vec![say_hello(), say()],
+		on_error: |error| Box::pin(on_error(error)),
+		..Default::default()
+	};
+
 	let framework = poise::Framework::builder()
-		.options(poise::FrameworkOptions {
-			commands: vec![say_hello()],
-			..Default::default()
-		})
+		.options(options)
 		.setup(|ctx, _ready, framework| {
 			Box::pin(async move {
 				println!("Logged in as {}", _ready.user.name);
