@@ -29,7 +29,7 @@ struct Handler {
 
 #[serenity::async_trait]
 impl serenity::EventHandler for Handler {
-    async fn message(&self, ctx: serenity::Context, new_message: serenity::Message) {
+    async fn message(&self, ctx: serenity::Context, mut new_message: serenity::Message) {
 		// println!("message received: {}", new_message.content);
  		let bot_id = serenity::UserId::new(493938037189902358);
 
@@ -37,7 +37,7 @@ impl serenity::EventHandler for Handler {
 			return
 		}
 		
-		// new_message.content.make_ascii_lowercase();
+		new_message.content.make_ascii_lowercase();
 		if new_message.content.contains("paprika") {
 			if let Err(why) = new_message.channel_id.say(&ctx.http, "paprika").await {
 				println!("Error sending message: {why:?}");
