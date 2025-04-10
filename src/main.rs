@@ -60,38 +60,52 @@ async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
 
 #[tokio::main]
 async fn main() {
-	let token = env::var("BENBOT_TOKEN").expect("missing BENBOT_TOKEN from environment variables");
-	let intents = serenity::GatewayIntents::non_privileged();
+    tracing_subscriber::fmt::init();
 
-	let options = poise::FrameworkOptions {
-		commands: vec![say_hello(), say(), register()],
-		prefix_options: poise::PrefixFrameworkOptions {
-			prefix: Some("..".into()),
-			non_command_message: Some(|_one, _two, msg| {
-				Box::pin(async move {
-					println!("non command message: {}", msg.content);
-					Ok(())
-				})
-			})
-		},
-		on_error: |error| Box::pin(on_error(error)),
-		..Default::default()
-	};
+    let token = var("BENBOT_TOKEN")
+        .expect("Missing `DISCORD_TOKEN` env var, see README for more information.");
+    let intents = serenity::GatewayIntents::non_privileged() 
+		| serenity::GatewayIntents::MESSAGE_CONTENT;
 
-	let framework = poise::Framework::builder()
-		.options(options)
-		.setup(|_ctx, _ready, _framework| {
-			Box::pin(async move {
-				println!("Logged in as {}", _ready.user.name);
-				// poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-				Ok(Data {})
-			})
-		})
-		.build();
+    let framework = poise::Framework::builder()
+        .setup(move |_ctx, _ready, _framework| {
+            Box::pin(async move {
+                Ok(Data { })
+            })
+        })
+        .options(poise::FrameworkOptions {
+			commands: vec![say_hello(), say(), register()],
+            event_handler: |ctx, event, framework, data| {
+                Box::pin(event_handler(ctx, event, framework, data))
+            },
+            ..Default::default()
+        })
+        .build();
 
-	let client = serenity::ClientBuilder::new(token, intents)
-		.framework(framework)
-		.await;
-	
-	client.unwrap().start().await.unwrap();
+    let client = serenity::ClientBuilder::new(token, intents)
+        .framework(framework)
+        .await;
+
+    client.unwrap().start().await.unwrap();
+}
+
+async fn event_handler(
+    ctx: &serenity::Context,
+    event: &serenity::FullEvent,
+    _framework: poise::FrameworkContext<'_, Data, Error>,
+    _data: &Data,
+) -> Result<(), Error> {
+    match event {
+        serenity::FullEvent::Ready { data_about_bot, .. } => {
+            println!("Logged in as {}", data_about_bot.user.name);
+        }
+        serenity::FullEvent::Message { new_message } => {
+            if new_message.content.to_lowercase().contains("paprika")
+                && new_message.author.id != ctx.cache.current_user().id {
+                new_message.reply(ctx, "prpaikea").await?;
+            }
+        }
+        _ => {}
+    }
+    Ok(())
 }
