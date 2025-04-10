@@ -36,9 +36,12 @@ impl serenity::EventHandler for Handler {
 		if new_message.author.id == bot_id {
 			return
 		}
-
-		if let Err(why) = new_message.channel_id.say(&ctx.http, "bruh hello").await {
-			println!("Error sending message: {why:?}");
+		
+		// new_message.content.make_ascii_lowercase();
+		if new_message.content.contains("paprika") {
+			if let Err(why) = new_message.channel_id.say(&ctx.http, "paprika").await {
+				println!("Error sending message: {why:?}");
+			}
 		}
 
 		// FrameworkContext contains all data that poise::Framework usually manages
