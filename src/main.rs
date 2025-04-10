@@ -60,9 +60,8 @@ async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt::init();
 
-    let token = var("BENBOT_TOKEN")
+    let token = env::var("BENBOT_TOKEN")
         .expect("Missing `DISCORD_TOKEN` env var, see README for more information.");
     let intents = serenity::GatewayIntents::non_privileged() 
 		| serenity::GatewayIntents::MESSAGE_CONTENT;
@@ -78,6 +77,7 @@ async fn main() {
             event_handler: |ctx, event, framework, data| {
                 Box::pin(event_handler(ctx, event, framework, data))
             },
+            on_error: |error| Box::pin(on_error(error)),
             ..Default::default()
         })
         .build();
