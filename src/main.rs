@@ -11,14 +11,6 @@ use std::vec::Vec;
 
 type Error = serenity::Error;
 
-/* static paprika_gifs = vec![
-	"https://tenor.com/view/paprika-movie-anime-atsuko-chiba-satoshi-kon-gif-14134517",
-    "https://tenor.com/view/paprika-gif-5430367",
-    "https://tenor.com/view/paprika-gif-25394130",
-	"https://tenor.com/view/paprika-paprika-anime-gif-10413276",
-    "https://media.tenor.com/wxaaQuEOXQAAAAAC/anime-burger.gif",
-]; */
-
 #[poise::command(prefix_command)]
 async fn ping(ctx: poise::Context<'_, (), Error>) -> Result<(), Error> {
     ctx.say("Pong!").await?;
