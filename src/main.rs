@@ -8,6 +8,14 @@ use poise::serenity_prelude as serenity;
 
 type Error = serenity::Error;
 
+/* static paprika_gifs = vec![
+	"https://tenor.com/view/paprika-movie-anime-atsuko-chiba-satoshi-kon-gif-14134517",
+    "https://tenor.com/view/paprika-gif-5430367",
+    "https://tenor.com/view/paprika-gif-25394130",
+	"https://tenor.com/view/paprika-paprika-anime-gif-10413276",
+    "https://media.tenor.com/wxaaQuEOXQAAAAAC/anime-burger.gif",
+]; */
+
 #[poise::command(prefix_command)]
 async fn ping(ctx: poise::Context<'_, (), Error>) -> Result<(), Error> {
     ctx.say("Pong!").await?;
@@ -18,15 +26,25 @@ struct Handler {
     options: poise::FrameworkOptions<(), Error>,
     shard_manager: std::sync::Mutex<Option<std::sync::Arc<serenity::ShardManager>>>,
 }
+
 #[serenity::async_trait]
 impl serenity::EventHandler for Handler {
     async fn message(&self, ctx: serenity::Context, new_message: serenity::Message) {
-		println!("message received: {}", new_message.content);
- 
+		// println!("message received: {}", new_message.content);
+ 		let bot_id = serenity::UserId::new(493938037189902358);
+
+		if new_message.author.id == bot_id {
+			return
+		}
+
+		if let Err(why) = new_message.channel_id.say(&ctx.http, "bruh hello").await {
+			println!("Error sending message: {why:?}");
+		}
+
 		// FrameworkContext contains all data that poise::Framework usually manages
         let shard_manager = (*self.shard_manager.lock().unwrap()).clone().unwrap();
         let framework_data = poise::FrameworkContext {
-            bot_id: serenity::UserId::new(493938037189902358),
+            bot_id: bot_id,
             options: &self.options,
             user_data: &(),
             shard_manager: &shard_manager,
