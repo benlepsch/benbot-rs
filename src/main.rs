@@ -5,6 +5,9 @@
 //! that to work, please adjust the bot ID below to your bot, for the mention parsing to work.
 
 use poise::serenity_prelude as serenity;
+use rand;
+use rand::seq::IndexedRandom;
+use std::vec::Vec;
 
 type Error = serenity::Error;
 
@@ -23,7 +26,8 @@ async fn ping(ctx: poise::Context<'_, (), Error>) -> Result<(), Error> {
 }
 
 struct Handler {
-    options: poise::FrameworkOptions<(), Error>,
+	paprika_gifs: Vec<String>,
+	options: poise::FrameworkOptions<(), Error>,
     shard_manager: std::sync::Mutex<Option<std::sync::Arc<serenity::ShardManager>>>,
 }
 
@@ -33,13 +37,18 @@ impl serenity::EventHandler for Handler {
 		// println!("message received: {}", new_message.content);
  		let bot_id = serenity::UserId::new(493938037189902358);
 
+
 		if new_message.author.id == bot_id {
 			return
 		}
 		
 		new_message.content.make_ascii_lowercase();
 		if new_message.content.contains("paprika") {
-			if let Err(why) = new_message.channel_id.say(&ctx.http, "paprika").await {
+			let chosen_gif = {
+				let mut rng = rand::rng();
+				self.paprika_gifs.choose(&mut rng).expect("please for the love of god just work already")
+			};
+			if let Err(why) = new_message.channel_id.say(&ctx.http, chosen_gif.to_string()).await {
 				println!("Error sending message: {why:?}");
 			}
 		}
@@ -68,7 +77,14 @@ async fn main() -> Result<(), Error> {
     let intents = serenity::GatewayIntents::non_privileged()
 		| serenity::GatewayIntents::MESSAGE_CONTENT;
     let mut handler = Handler {
-        options: poise::FrameworkOptions {
+    	paprika_gifs: vec![
+			"https://tenor.com/view/paprika-movie-anime-atsuko-chiba-satoshi-kon-gif-14134517".to_string(),
+    		"https://tenor.com/view/paprika-gif-5430367".to_string(),
+    		"https://tenor.com/view/paprika-gif-25394130".to_string(),
+			"https://tenor.com/view/paprika-paprika-anime-gif-10413276".to_string(),
+    		"https://media.tenor.com/wxaaQuEOXQAAAAAC/anime-burger.gif".to_string(),
+		],
+		options: poise::FrameworkOptions {
             commands: vec![ping()],
             ..Default::default()
         },
