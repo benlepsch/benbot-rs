@@ -1,83 +1,67 @@
+//! poise::Framework handles client creation and event handling for you. Alternatively, you can
+//! do that yourself and merely forward the events you receive to poise. This example shows how.
+//!
+//! Note: this example configures no designated prefix. Mention the bot as a prefix instead. For
+//! that to work, please adjust the bot ID below to your bot, for the mention parsing to work.
+
 use poise::serenity_prelude as serenity;
-use std::env;
 
-struct Data {}
-type Error = Box<dyn std::error::Error + Send + Sync>;
-type Context<'a> = poise::Context<'a, Data, Error>;
+type Error = serenity::Error;
 
-
-/* Commands */
-
-// says hello
-#[poise::command(slash_command, prefix_command)]
-async fn say_hello(
-	ctx: Context<'_>
-) -> Result<(), Error> {
-	ctx.say("i am poising").await?;
-	Ok(())
-}
-
-#[poise::command(slash_command, prefix_command)]
-async fn say(
-	ctx: Context<'_>,
-	#[description = "what to say"] text: String,
-	#[description = "who is saying"] user: serenity::User,
-) -> Result<(), Error> {
-	let saying = format!("{} says: {}", user.name, text);
-	
-	ctx.say(saying).await?;
-	Ok(())
-}
-
-// register command
 #[poise::command(prefix_command)]
-async fn register(ctx: Context<'_>) -> Result<(), Error> {
-	poise::builtins::register_application_commands_buttons(ctx).await?;
-	Ok(())
+async fn ping(ctx: poise::Context<'_, (), Error>) -> Result<(), Error> {
+    ctx.say("Pong!").await?;
+    Ok(())
 }
 
-/* Error handling */
+struct Handler {
+    options: poise::FrameworkOptions<(), Error>,
+    shard_manager: std::sync::Mutex<Option<std::sync::Arc<serenity::ShardManager>>>,
+}
+#[serenity::async_trait]
+impl serenity::EventHandler for Handler {
+    async fn message(&self, ctx: serenity::Context, new_message: serenity::Message) {
+		println!("message received: {}", new_message.content);
+ 
+		// FrameworkContext contains all data that poise::Framework usually manages
+        let shard_manager = (*self.shard_manager.lock().unwrap()).clone().unwrap();
+        let framework_data = poise::FrameworkContext {
+            bot_id: serenity::UserId::new(493938037189902358),
+            options: &self.options,
+            user_data: &(),
+            shard_manager: &shard_manager,
+        };
 
-async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
-	match error {
-		poise::FrameworkError::Setup { error, .. } => panic!("Failed to start bot: {:?}", error),
-		poise::FrameworkError::Command {error, ctx, ..} => {
-			println!("Error in command `{}`: {:?}", ctx.command().name, error);
-		}
+ 	
 
-		error => {
-			if let Err(e) = poise::builtins::on_error(error).await {
-				println!("Error while handling error: {}", e);
-			}
-		}
-	}
+ 		let event = serenity::FullEvent::Message { new_message };
+        poise::dispatch_event(framework_data, &ctx, event).await;
+    }
+
+    // For slash commands or edit tracking to work, forward interaction_create and message_update
 }
 
 #[tokio::main]
-async fn main() {
-	let token = env::var("BENBOT_TOKEN").expect("missing BENBOT_TOKEN from environment variables");
-	let intents = serenity::GatewayIntents::non_privileged();
+async fn main() -> Result<(), Error> {
+    let token = std::env::var("BENBOT_TOKEN").expect("missing DISCORD_TOKEN");
+    let intents = serenity::GatewayIntents::non_privileged()
+		| serenity::GatewayIntents::MESSAGE_CONTENT;
+    let mut handler = Handler {
+        options: poise::FrameworkOptions {
+            commands: vec![ping()],
+            ..Default::default()
+        },
+        shard_manager: std::sync::Mutex::new(None),
+    };
+    poise::set_qualified_names(&mut handler.options.commands); // some setup
 
-	let options = poise::FrameworkOptions {
-		commands: vec![say_hello(), say(), register()],
-		on_error: |error| Box::pin(on_error(error)),
-		..Default::default()
-	};
+    let handler = std::sync::Arc::new(handler);
+    let mut client = serenity::Client::builder(token, intents)
+        .event_handler_arc(handler.clone())
+        .await?;
 
-	let framework = poise::Framework::builder()
-		.options(options)
-		.setup(|ctx, _ready, framework| {
-			Box::pin(async move {
-				println!("Logged in as {}", _ready.user.name);
-				// poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-				Ok(Data {})
-			})
-		})
-		.build();
-	
-	let client = serenity::ClientBuilder::new(token, intents)
-		.framework(framework)
-		.await;
-	
-	client.unwrap().start().await.unwrap();
+    *handler.shard_manager.lock().unwrap() = Some(client.shard_manager.clone());
+    client.start().await?;
+
+    Ok(())
 }
