@@ -3,9 +3,8 @@ use std::env;
 
 use rand;
 use rand::seq::IndexedRandom;
-use std::vec::Vec;
-
 struct Data {}
+
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 
@@ -58,9 +57,16 @@ async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
 	}
 }
 
+const PAPRIKA_GIFS: &'static [&str] = &[
+    "https://tenor.com/view/paprika-movie-anime-atsuko-chiba-satoshi-kon-gif-14134517",
+    "https://tenor.com/view/paprika-gif-5430367",
+    "https://tenor.com/view/paprika-gif-25394130",
+    "https://tenor.com/view/paprika-paprika-anime-gif-10413276",
+    "https://media.tenor.com/wxaaQuEOXQAAAAAC/anime-burger.gif",
+];
+
 #[tokio::main]
 async fn main() {
-
     let token = env::var("BENBOT_TOKEN")
         .expect("Missing `DISCORD_TOKEN` env var, see README for more information.");
     let intents = serenity::GatewayIntents::non_privileged() 
@@ -102,7 +108,12 @@ async fn event_handler(
         serenity::FullEvent::Message { new_message } => {
             if new_message.content.to_lowercase().contains("paprika")
                 && new_message.author.id != ctx.cache.current_user().id {
-                new_message.reply(ctx, "prpaikea").await?;
+                let chosen_gif = {
+                    let mut rng = rand::rng();
+                    PAPRIKA_GIFS.choose(&mut rng).expect("should pick a gif")
+                };
+
+                new_message.reply(ctx, *chosen_gif).await?;
             }
         }
         _ => {}
