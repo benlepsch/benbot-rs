@@ -29,6 +29,12 @@ async fn say(
 	Ok(())
 }
 
+// register command
+#[poise::command(prefix_command)]
+async fn register(ctx: Context<'_>) -> Result<(), Error> {
+	poise::builtins::register_application_commands_buttons(ctx).await?;
+	Ok(())
+}
 
 /* Error handling */
 
@@ -53,7 +59,7 @@ async fn main() {
 	let intents = serenity::GatewayIntents::non_privileged();
 
 	let options = poise::FrameworkOptions {
-		commands: vec![say_hello(), say()],
+		commands: vec![say_hello(), say(), register()],
 		on_error: |error| Box::pin(on_error(error)),
 		..Default::default()
 	};
@@ -63,7 +69,7 @@ async fn main() {
 		.setup(|ctx, _ready, framework| {
 			Box::pin(async move {
 				println!("Logged in as {}", _ready.user.name);
-				poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+				// poise::builtins::register_globally(ctx, &framework.options().commands).await?;
 				Ok(Data {})
 			})
 		})
