@@ -1,11 +1,17 @@
 use crate::{Context, Error};
 use poise::serenity_prelude as serenity;
 
+use serenity::builder::{CreateEmbed, CreateMessage};
+use serenity::model::id::ChannelId;
+
 use rand;
 use rand::seq::IndexedRandom;
 
+use std::env;
+
 #[derive(Debug)]
 pub struct Data {}
+
 
 /* Commands */
 
@@ -37,7 +43,21 @@ pub async fn pin(
     #[description = "test"] _msg: serenity::Message,
 ) -> Result<(), Error> {
     // dbg!(ctx);
-    ctx.say("pinning").await?;
+    let pins_channel_id = env::var("PINS_CHANNEL")
+        .expect("pins channel missing from env")
+        .parse::<u64>()
+        .unwrap();
+
+    let pins_channel = ChannelId::from(pins_channel_id);
+
+    let embed = CreateEmbed::new()
+        .title("pinning")
+        .description("your message here");
+    
+    let builder = CreateMessage::new().embed(embed);
+
+    pins_channel.send_message(&ctx.http(), builder).await?;
+    ctx.say("ok").await?;
     Ok(())
 }
 
