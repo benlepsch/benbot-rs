@@ -40,7 +40,7 @@ pub async fn say(
 #[poise::command(context_menu_command = "pin")]
 pub async fn pin(
     ctx: Context<'_>,
-    #[description = "test"] _msg: serenity::Message,
+    #[description = "test"] msg: serenity::Message,
 ) -> Result<(), Error> {
     // dbg!(ctx);
     let pins_channel_id = env::var("PINS_CHANNEL")
@@ -49,10 +49,19 @@ pub async fn pin(
         .unwrap();
 
     let pins_channel = ChannelId::from(pins_channel_id);
+    
+    let memb = ctx.guild_id().expect("please")
+        .to_partial_guild(&ctx.http()).await?
+        .member(&ctx.http(), msg.author.id).await?;
+    
+    // dbg!(&msg);
+    let nick = memb.nick
+        .unwrap_or_else(|| {msg.author.name});
+    
 
     let embed = CreateEmbed::new()
-        .title("pinning")
-        .description("your message here");
+        .title(nick)
+        .description(msg.content);
     
     let builder = CreateMessage::new().embed(embed);
 

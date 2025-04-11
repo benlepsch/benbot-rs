@@ -28,7 +28,8 @@ async fn main() {
     let token = env::var("BENBOT_TOKEN")
         .expect("Missing `DISCORD_TOKEN` env var, see README for more information.");
     let intents = serenity::GatewayIntents::non_privileged() 
-		| serenity::GatewayIntents::MESSAGE_CONTENT;
+		| serenity::GatewayIntents::MESSAGE_CONTENT
+        | serenity::GatewayIntents::GUILD_MEMBERS;
 
     let framework = poise::Framework::builder()
         .setup(move |_ctx, _ready, _framework| {
