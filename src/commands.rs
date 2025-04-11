@@ -50,18 +50,21 @@ pub async fn pin(
 
     let pins_channel = ChannelId::from(pins_channel_id);
     
+    // println!("Link: {}", &msg.link());
+
     let memb = ctx.guild_id().expect("please")
         .to_partial_guild(&ctx.http()).await?
         .member(&ctx.http(), msg.author.id).await?;
     
     // dbg!(&msg);
-    let nick = memb.nick
-        .unwrap_or_else(|| {msg.author.name});
-    
+    let nick = memb.nick.unwrap();
+        // .unwrap_or_else(|| {msg.author.name});
+
+    let body = format!("{}\n\n{}", &msg.content, &msg.link());
 
     let embed = CreateEmbed::new()
         .title(nick)
-        .description(msg.content);
+        .description(body);
     
     let builder = CreateMessage::new().embed(embed);
 
