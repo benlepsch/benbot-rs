@@ -42,32 +42,24 @@ pub async fn pin(
     ctx: Context<'_>,
     #[description = "test"] msg: serenity::Message,
 ) -> Result<(), Error> {
-    // dbg!(ctx);
     let pins_channel_id = env::var("PINS_CHANNEL")
         .expect("pins channel missing from env")
-        .parse::<u64>()
-        .unwrap();
+        .parse::<u64>().unwrap();
 
     let pins_channel = ChannelId::from(pins_channel_id);
     
-    // println!("Link: {}", &msg.link());
-
     let memb = ctx.guild_id().expect("please")
         .to_partial_guild(&ctx.http()).await?
         .member(&ctx.http(), msg.author.id).await?;
-    
-    // dbg!(&msg);
-    let nick = memb.nick.unwrap();
-        // .unwrap_or_else(|| {msg.author.name});
+   
+    let backup = &msg.author.name;
+    let nick = memb.nick.unwrap_or_else(|| {backup.to_string()});
 
     let body = format!("{}\n\n{}", &msg.content, &msg.link());
-
-    // let footer = serenity::CreateEmbedFooter::new(format!("{} ", &msg.link()));
 
     let embed = CreateEmbed::new()
         .title(nick)
         .description(body);
-        // .footer(footer);
     
     let builder = CreateMessage::new().embed(embed);
 
