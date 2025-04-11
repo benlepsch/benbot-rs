@@ -4,6 +4,7 @@ use poise::serenity_prelude as serenity;
 use rand;
 use rand::seq::IndexedRandom;
 
+#[derive(Debug)]
 pub struct Data {}
 
 /* Commands */
@@ -27,6 +28,17 @@ pub async fn say(
 	
 	ctx.say(saying).await?;
 	Ok(())
+}
+
+// try a context menu command
+#[poise::command(context_menu_command = "pin")]
+pub async fn pin(
+    ctx: Context<'_>,
+    #[description = "test"] _msg: serenity::Message,
+) -> Result<(), Error> {
+    // dbg!(ctx);
+    ctx.say("pinning").await?;
+    Ok(())
 }
 
 // register command

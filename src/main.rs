@@ -37,7 +37,12 @@ async fn main() {
             })
         })
         .options(poise::FrameworkOptions {
-			commands: vec![commands::say_hello(), commands::say(), commands::register()],
+			commands: vec![
+                commands::say_hello(), 
+                commands::say(), 
+                commands::pin(),
+                commands::register()
+            ],
             event_handler: |ctx, event, framework, commands::Data {}| {
                 Box::pin(commands::event_handler(ctx, event, framework, &commands::Data {}))
             },
