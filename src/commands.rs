@@ -42,25 +42,47 @@ pub async fn pin(
     ctx: Context<'_>,
     #[description = "test"] msg: serenity::Message,
 ) -> Result<(), Error> {
+    // get the channel to send the pin to
     let pins_channel_id = env::var("PINS_CHANNEL")
         .expect("pins channel missing from env")
         .parse::<u64>().unwrap();
-
     let pins_channel = ChannelId::from(pins_channel_id);
     
+    // get the nickname of the person who sent the message
     let memb = ctx.guild_id().expect("please")
         .to_partial_guild(&ctx.http()).await?
         .member(&ctx.http(), msg.author.id).await?;
-   
     let backup = &msg.author.name;
     let nick = memb.nick.unwrap_or_else(|| {backup.to_string()});
 
+    // get the message text + link for the embed
     let body = format!("{}\n\n{}", &msg.content, &msg.link());
 
-    let embed = CreateEmbed::new()
+    let mut embed = CreateEmbed::new()
         .title(nick)
         .description(body);
+
+    // let mut builder_files = Vec::new();
     
+
+    let mut ct: &str = "hello there";
+    if msg.attachments.len() > 0 {
+        ct = msg.attachments[0].content_type.as_ref()
+            .unwrap().split("/").collect::<Vec<&str>>()[0];
+    }
+
+    // get attachments
+    if msg.attachments.len() == 1 && ct == "image" {
+        embed = embed.image(&msg.attachments[0].url);
+    } else {
+        /*
+        for atch in msg.attachments.iter() {
+            println!("content_type: {}", atch.content_type.as_ref().unwrap());
+            builder_files.push(atch.clone());
+        }
+        */
+    }
+
     let builder = CreateMessage::new().embed(embed);
 
     pins_channel.send_message(&ctx.http(), builder).await?;
