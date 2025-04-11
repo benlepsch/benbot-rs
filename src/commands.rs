@@ -62,9 +62,14 @@ pub async fn pin(
 
     let body = format!("{}\n\n{}", &msg.content, &msg.link());
 
+    let footer = serenity::CreateEmbedFooter::new(
+        format!("sent in channel {}", &msg.channel_id.name(&ctx.http()).await?)
+    );
+
     let embed = CreateEmbed::new()
         .title(nick)
-        .description(body);
+        .description(body)
+        .footer(footer);
     
     let builder = CreateMessage::new().embed(embed);
 
