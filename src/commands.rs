@@ -1,7 +1,7 @@
 use crate::{Context, Error};
 use poise::serenity_prelude as serenity;
 
-use serenity::builder::{CreateEmbed, CreateMessage};
+use serenity::builder::{CreateEmbed, CreateMessage, CreateAttachment};
 use serenity::model::id::ChannelId;
 
 use rand;
@@ -62,9 +62,9 @@ pub async fn pin(
         .title(nick)
         .description(body);
 
-    // let mut builder_files = Vec::new();
-    
-
+    // get attachment type 
+    // if it's a picture and only one attachment, add it directly to the embed
+    let mut builder_files: Vec<CreateAttachment> = Vec::new();
     let mut ct: &str = "hello there";
     if msg.attachments.len() > 0 {
         ct = msg.attachments[0].content_type.as_ref()
@@ -75,15 +75,17 @@ pub async fn pin(
     if msg.attachments.len() == 1 && ct == "image" {
         embed = embed.image(&msg.attachments[0].url);
     } else {
-        /*
         for atch in msg.attachments.iter() {
             println!("content_type: {}", atch.content_type.as_ref().unwrap());
-            builder_files.push(atch.clone());
-        }
-        */
+            builder_files.push(
+                CreateAttachment::url(&ctx.http(), &atch.url).await?
+            );
+        }   
     }
 
-    let builder = CreateMessage::new().embed(embed);
+    let builder = CreateMessage::new()
+        .embed(embed)
+        .add_files(builder_files);
 
     pins_channel.send_message(&ctx.http(), builder).await?;
     ctx.say("ok").await?;
