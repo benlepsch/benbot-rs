@@ -36,6 +36,14 @@ pub async fn say(
 	Ok(())
 }
 
+#[poise::command(slash_command, prefix_command)]
+pub async fn src(
+    ctx: Context<'_>
+) -> Result<(), Error> {
+    ctx.say("https://github.com/benlepsch/benbot-rs").await?;
+    Ok(())
+}
+
 // try a context menu command
 #[poise::command(context_menu_command = "pin")]
 pub async fn pin(

@@ -41,6 +41,7 @@ async fn main() {
 			commands: vec![
                 commands::say_hello(), 
                 commands::say(), 
+                commands::src(),
                 commands::pin(),
                 commands::register()
             ],
