@@ -22,6 +22,7 @@ jobs:
           echo PKG_VERSION=$(awk -F ' = ' '$1 ~ /version/ { gsub(/["]/, "", $2); printf("%s",$2) }' Cargo.toml) >> $GITHUB_OUTPUT
 
       - name: Set Tag
+        id: git-tag
         shell: "bash"
         run: |
           git tag v${{ steps.get-tag.outputs.PKG_VERSION }} && git push --tags
