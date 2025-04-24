@@ -14,8 +14,8 @@ COPY ./src ./src
 RUN rm ./target/release/deps/benbot_rs*
 RUN cargo build --release
 
-FROM rust:1.86
+FROM debian:bookworm-slim 
 
-COPY --from=build /benbot-rs/target/release/benbot-rs .
+COPY --from=build /benbot-rs/target/release/benbot-rs . 
 
 CMD ["./benbot-rs"]
