@@ -27,7 +27,7 @@ jobs:
         run: |
           git tag v${{ steps.get-tag.outputs.PKG_VERSION }} && git push --tags
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build:
     name: "Build Image"
