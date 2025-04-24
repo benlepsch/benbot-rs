@@ -56,6 +56,6 @@ jobs:
           cache-from: type=registry,ref=ghcr.io/benlepsch/benbot-rs # :${{ needs.create-tag.outputs.tag }}
           cache-to: type=inline
           tags: |
-            ghcr.io/benlepsch/benbot-rs # :${{ needs.create-tag.outputs.tag }}
+            ghcr.io/benlepsch/benbot-rs
           build-args: |
             git_sha=${{ github.sha }}
