@@ -59,3 +59,13 @@ jobs:
             ghcr.io/benlepsch/benbot-rs
           build-args: |
             git_sha=${{ github.sha }}
+
+  run:
+    name: "Run container"
+    runs-on: self-hosted
+    needs: build
+    uses: addnab/docker-run-action@v3
+    with:
+      registry: ghcr.io
+      image: benlepsch/benbot-rs:latest
+      options: --env-file ../.env
