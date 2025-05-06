@@ -39,6 +39,7 @@ async fn main() {
         })
         .options(poise::FrameworkOptions {
 			commands: vec![
+                commands::ip(),
                 commands::say_hello(), 
                 commands::say(), 
                 commands::src(),
