@@ -37,6 +37,14 @@ pub async fn say(
 }
 
 #[poise::command(slash_command, prefix_command)]
+pub async fn monkey(
+	ctx: Context<'_>
+) -> Result<(), Error> {
+	ctx.say("https://tenor.com/view/jeonqmi-monkey-escape-gif-21816255").await?;
+	Ok(())
+}
+
+#[poise::command(slash_command, prefix_command)]
 pub async fn src(
     ctx: Context<'_>
 ) -> Result<(), Error> {
