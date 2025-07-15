@@ -7,6 +7,8 @@ use serenity::model::id::ChannelId;
 use rand;
 use rand::seq::IndexedRandom;
 
+use public_ip;
+
 use std::env;
 
 #[derive(Debug)]
@@ -15,10 +17,31 @@ pub struct Data {}
 
 /* Commands */
 
+#[poise::command(slash_command, prefix_command)]
+pub async fn ip(
+    ctx: Context<'_>,
+) -> Result<(), Error> {
+    if !ctx.author().id.get() == 262637906865291264 {
+        if let Some(ip) == public_ip::addr().await {
+            let msg = CreateMessage::new().content(format!("IP address: {ip}"));
+
+            if let Err(why) = ctx.author().id.direct_message(&ctx, msg).await {
+                ctx.say("error sending message: {why:?}").await?;
+            }
+        } else {
+            ctx.say("error getting ip address").await?;
+        }
+    } else {
+        ctx.say("you don't have permission to run that comand");
+    }
+
+    Ok(())
+}
+
 // says hello
 #[poise::command(slash_command, prefix_command)]
 pub async fn say_hello(
-	ctx: Context<'_>
+	ctx: Context<'_>,
 ) -> Result<(), Error> {
 	ctx.say("i am poising").await?;
 	Ok(())
