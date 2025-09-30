@@ -22,7 +22,7 @@ pub async fn ip(
     ctx: Context<'_>,
 ) -> Result<(), Error> {
     if !ctx.author().id.get() == 262637906865291264 {
-        if let Some(ip) == public_ip::addr().await {
+        if let Some(ip) = public_ip::addr().await {
             let msg = CreateMessage::new().content(format!("IP address: {ip}"));
 
             if let Err(why) = ctx.author().id.direct_message(&ctx, msg).await {
@@ -122,9 +122,14 @@ pub async fn pin(
         }   
     }
 
-    let builder = CreateMessage::new()
-        .embed(embed)
-        .add_files(builder_files);
+    let mut builder = CreateMessage::new()
+        .embed(embed);
+    
+    for emb in msg.embeds.iter() {
+        builder = builder.embed(CreateEmbed::from(emb.clone()));
+    }
+
+    builder = builder.add_files(builder_files);
 
     pins_channel.send_message(&ctx.http(), builder).await?;
     ctx.say("ok").await?;
