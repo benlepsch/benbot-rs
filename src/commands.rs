@@ -33,7 +33,7 @@ pub async fn ip(
             ctx.say("error getting ip address").await?;
         }
     } else {
-        ctx.say("you don't have permission to run that comand");
+        ctx.say("you don't have permission to run that comand").await?;
     }
 
     Ok(())
@@ -174,9 +174,9 @@ pub async fn event_handler(
 
                 new_message.reply(ctx, *chosen_gif).await?;
             } else {
-                let num = rand::rng().gen_range(0..12000);
+                let num = rand::rng().random_range(0..12000);
                 if num == 128 {
-                    new_message.reply("please kill me").await?;
+                    new_message.reply(ctx, "please kill me").await?;
                 }
             }
         }
