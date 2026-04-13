@@ -5,6 +5,7 @@ use serenity::builder::{CreateEmbed, CreateMessage, CreateAttachment};
 use serenity::model::id::ChannelId;
 
 use rand;
+use rand::Rng;
 use rand::seq::IndexedRandom;
 
 use public_ip;
@@ -152,7 +153,7 @@ const PAPRIKA_GIFS: &'static [&str] = &[
     "https://media.tenor.com/wxaaQuEOXQAAAAAC/anime-burger.gif",
 ];
 
-// message handler for paprika
+// message handler for paprika AND PLEASE KILL ME MESSAGES
 pub async fn event_handler(
     ctx: &serenity::Context,
     event: &serenity::FullEvent,
@@ -172,6 +173,11 @@ pub async fn event_handler(
                 };
 
                 new_message.reply(ctx, *chosen_gif).await?;
+            } else {
+                let num = rand::rng().gen_range(0..12000);
+                if num == 128 {
+                    new_message.reply("please kill me").await?;
+                }
             }
         }
         _ => {}
