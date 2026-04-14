@@ -27,7 +27,7 @@ pub async fn ip(
             let msg = CreateMessage::new().content(format!("IP address: {ip}"));
 
             if let Err(why) = ctx.author().id.direct_message(&ctx, msg).await {
-                ctx.say("error sending message: {why:?}").await?;
+                ctx.say(format!("error sending message: {why:?}")).await?;
             }
         } else {
             ctx.say("error getting ip address").await?;

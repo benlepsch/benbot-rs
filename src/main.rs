@@ -1,4 +1,5 @@
 mod commands;
+mod leaguer;
 
 use poise::serenity_prelude as serenity;
 use std::env;
@@ -45,7 +46,8 @@ async fn main() {
                 commands::monkey(),
                 commands::src(),
                 commands::pin(),
-                commands::register()
+                commands::register(),
+                leaguer::start_check(),
             ],
             event_handler: |ctx, event, framework, commands::Data {}| {
                 Box::pin(commands::event_handler(ctx, event, framework, &commands::Data {}))
