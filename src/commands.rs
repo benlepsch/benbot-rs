@@ -1,4 +1,4 @@
-use crate::{Context, Error};
+use crate::{Context, Error, Data};
 use poise::serenity_prelude as serenity;
 
 use serenity::builder::{CreateEmbed, CreateMessage, CreateAttachment};
@@ -11,9 +11,6 @@ use rand::seq::IndexedRandom;
 use public_ip;
 
 use std::env;
-
-#[derive(Debug)]
-pub struct Data {}
 
 
 /* Commands */
