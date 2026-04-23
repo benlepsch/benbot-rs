@@ -173,6 +173,16 @@ pub async fn alert_here(
 ) -> Result<(), Error> {
     let mut next = Utc::now();
 
+    let mut saying: String = "checking leaguers:".to_string();
+    let players: Vec<Leaguer> = sqlx::query_as("SELECT * FROM leaguers")
+        .fetch_all(&ctx.data().db).await.unwrap();
+    
+    for p in players.iter() {
+        saying = format!("{}\n{}#{}", saying, p.name, p.tag_line);
+    }
+
+    ctx.say(saying).await?;
+
     loop {
         next = next.checked_add_signed(Duration::seconds(60)).unwrap();
         let diff = (next - Utc::now()).to_std().unwrap();
