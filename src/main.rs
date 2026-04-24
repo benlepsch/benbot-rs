@@ -42,17 +42,18 @@ async fn main() {
     
     connection.execute("
         CREATE TABLE IF NOT EXISTS leaguers (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
             tag_line TEXT,
-            puuid TEXT,
+            puuid TEXT PRIMARY KEY,
             in_game BOOL
         )
     ").await.unwrap();
 
+    let rg_api = env::var("RIOT_API_KEY")
+        .expect("missing riot api env var");
     let bot_data: Data = Data {
         db: connection,
-        api_key: "RGAPI-a5a10c2d-92ef-40a9-8cc5-2a26e3921e07".to_string(),
+        api_key: rg_api,
     };
 
     let token = env::var("BENBOT_TOKEN")
@@ -76,6 +77,9 @@ async fn main() {
                 commands::src(),
                 commands::pin(),
                 commands::register(),
+                leaguer::add_user(),
+                leaguer::show_users(),
+                leaguer::alert_here(),
             ],
             event_handler: |ctx, event, framework, data| {
                 Box::pin(commands::event_handler(ctx, event, framework, data))

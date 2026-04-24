@@ -2,3 +2,4 @@
 env.sh
 /target
 /actions-runner
+.cargo

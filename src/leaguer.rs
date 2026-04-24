@@ -1,5 +1,8 @@
 use crate::{Context, Error};
 
+use poise::serenity_prelude as serenity;
+use serenity::builder::CreateMessage;
+
 use tokio::time;
 use chrono::{Utc, Duration};
 
@@ -112,7 +115,6 @@ struct GameCustomizationObject {
 #[allow(dead_code)]
 #[derive(Debug, sqlx::FromRow)]
 struct Leaguer {
-    id: i32,
     name: String,
     tag_line: String,
     puuid: String,
@@ -156,6 +158,7 @@ pub async fn add_user(
                 .await.unwrap();
             
             ctx.say(format!("adding user: {}#{}", r.game_name, r.tag_line)).await?;
+            println!("Addign user {}#{} : {}", r.game_name, r.tag_line, &r.puuid);
         },
         reqwest::StatusCode::NOT_FOUND => {
             ctx.say(format!("account not found: {}#{}", username, tag_line)).await?;
@@ -168,25 +171,42 @@ pub async fn add_user(
 }
 
 #[poise::command(slash_command, prefix_command)]
+pub async fn show_users(
+    ctx: Context<'_>,
+) -> Result <(), Error> {
+    let mut saying: String = "leaguers:".to_string();
+    let players: Vec<Leaguer> = sqlx::query_as("SELECT * FROM leaguers")
+        .fetch_all(&ctx.data().db).await.unwrap();
+    
+    for p in players.iter() {
+        saying = format!("{}\n- {}#{}", saying, p.name, p.tag_line);
+    }
+
+    ctx.say(saying).await?;
+
+    Ok(())
+}
+
+#[poise::command(slash_command, prefix_command)]
 pub async fn alert_here(
     ctx: Context<'_>,
 ) -> Result<(), Error> {
     let mut next = Utc::now();
+    let alert_channel = ctx.channel_id();
 
     let mut saying: String = "checking leaguers:".to_string();
     let players: Vec<Leaguer> = sqlx::query_as("SELECT * FROM leaguers")
         .fetch_all(&ctx.data().db).await.unwrap();
     
     for p in players.iter() {
-        saying = format!("{}\n{}#{}", saying, p.name, p.tag_line);
+        saying = format!("{}\n- {}#{}", saying, p.name, p.tag_line);
     }
 
     ctx.say(saying).await?;
 
     loop {
         next = next.checked_add_signed(Duration::seconds(60)).unwrap();
-        let diff = (next - Utc::now()).to_std().unwrap();
-
+        
         /* Check Database */
         let players: Vec<Leaguer> = sqlx::query_as("SELECT * FROM leaguers")
             .fetch_all(&ctx.data().db).await.unwrap();
@@ -200,13 +220,16 @@ pub async fn alert_here(
                 .send()
                 .await.unwrap();
 
+            println!("{}#{} : {} : {}", p.name, p.tag_line, p.puuid, p.in_game);
             match in_game.status() {
                 reqwest::StatusCode::OK => {
                     if !p.in_game {
-                        sqlx::query(format!("UPDATE leaguers SET in_game = 1 WHERE id = {}", p.id).as_str())
+                        sqlx::query(format!("UPDATE leaguers SET in_game = 1 WHERE puuid = '{}'", p.puuid).as_str())
                             .execute(&ctx.data().db).await.unwrap();
                         println!("{}#{} joined a game", p.name, p.tag_line);
-                        ctx.say(format!("{}#{} joined a game", p.name, p.tag_line)).await?;
+
+                        let msg = CreateMessage::new().content(format!("{}#{} joined a game", p.name, p.tag_line));
+                        let _ = alert_channel.send_message(&ctx.http(), msg).await?;
                     } else {
                         println!("{}#{} still in game", p.name, p.tag_line);
                     }
@@ -214,10 +237,12 @@ pub async fn alert_here(
 
                 reqwest::StatusCode::NOT_FOUND =>  {
                     if p.in_game {
-                        sqlx::query(format!("UPDATE leaguers SET in_game = 0 WHERE id = {}", p.id).as_str())
+                        sqlx::query(format!("UPDATE leaguers SET in_game = 0 WHERE puuid = '{}'", p.puuid).as_str())
                             .execute(&ctx.data().db).await.unwrap();
                         println!("{}#{} game ended", p.name, p.tag_line);
-                        ctx.say(format!("{}#{} game ended", p.name, p.tag_line)).await?;
+                        
+                        let msg = CreateMessage::new().content(format!("{}#{} game ended", p.name, p.tag_line));
+                        let _ = alert_channel.send_message(&ctx.http(), msg).await?;
                     } else {
                         println!("{}#{} not in game", p.name, p.tag_line);
                     }
@@ -228,6 +253,8 @@ pub async fn alert_here(
                 },
             }
         }
+
+        let diff = (next - Utc::now()).to_std().unwrap();
         time::sleep(diff).await;
     }
 
